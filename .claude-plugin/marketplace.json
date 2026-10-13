@@ -1,0 +1,9 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "planmap",
+  "description": "planmap plugin",
+  "owner": {"name": "planmap contributors"},
+  "plugins": [
+    {"name": "planmap", "description": "Keeps a live map of your plan, features and GitHub issues current.", "version": "0.1.0", "source": "./", "category": "productivity"}
+  ]
+}

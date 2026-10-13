@@ -1,0 +1,9 @@
+{
+  "_about": "Demo config. github_fixture makes the build offline; a real project leaves it out.",
+  "repo": "example/todo-app",
+  "plan_file": "PLAN.md",
+  "plan_ref": "WORKTREE",
+  "taxonomy": ".planmap/taxonomy.json",
+  "lane_prefix": "lane:",
+  "github_fixture": "github.json"
+}

@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "planmap"
+version = "0.1.0"
+description = "Project management for coding agents. Every plan item is tied to a GitHub issue."
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.9"
+dependencies = []
+classifiers = ["Programming Language :: Python :: 3", "License :: OSI Approved :: MIT License"]
+
+[project.scripts]
+planmap = "planmap.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/patrickt6/planmap"
+
+[tool.setuptools]
+packages = ["planmap"]
+
+[tool.setuptools.package-data]
+planmap = ["static/*.html", "skill/*.md"]

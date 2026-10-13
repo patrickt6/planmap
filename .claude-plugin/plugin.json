@@ -1,0 +1,9 @@
+{
+  "name": "planmap",
+  "version": "0.1.0",
+  "description": "Project management for coding agents. Every plan item is tied to a GitHub issue, and the agent keeps both current.",
+  "homepage": "https://github.com/patrickt6/planmap",
+  "repository": "https://github.com/patrickt6/planmap",
+  "license": "MIT",
+  "keywords": ["planning", "github", "issues", "roadmap"]
+}

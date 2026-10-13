@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>planmap</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='4' cy='8' r='3' fill='%2322a06b'/%3E%3Ccircle cx='12' cy='4' r='3' fill='%23d9952b'/%3E%3Ccircle cx='12' cy='12' r='3' fill='%236b7c93'/%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#f6f7f9; --panel:#ffffff; --panel-2:#f0f2f5; --ink:#141a22; --ink-2:#5a6676; --rule:#e2e6eb;
+  --built:#1f9d6a; --inpr:#d48a1e; --planned:#6b7c93; --idea:#8a63d2; --dead:#a8b0ba; --warn:#d0533a;
+  --accent:#2f6fea; --shadow:0 1px 2px rgba(16,24,40,.06),0 4px 14px rgba(16,24,40,.06);
+  --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0d1117; --panel:#151b23; --panel-2:#1b232d; --ink:#e6edf3; --ink-2:#8d99a8; --rule:#262f3a;
+    --built:#3fbf8a; --inpr:#e8a33d; --planned:#8494a8; --idea:#a98af0; --dead:#4b5563; --warn:#f07158;
+    --accent:#6ea2ff; --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.3);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0d1117; --panel:#151b23; --panel-2:#1b232d; --ink:#e6edf3; --ink-2:#8d99a8; --rule:#262f3a;
+  --built:#3fbf8a; --inpr:#e8a33d; --planned:#8494a8; --idea:#a98af0; --dead:#4b5563; --warn:#f07158;
+  --accent:#6ea2ff; --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.3);
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 var(--sans);-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none} a:hover{text-decoration:underline}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+
+header{position:sticky;top:0;z-index:10;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--rule)}
+.bar{display:flex;align-items:center;gap:14px;padding:12px 20px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.logo{width:26px;height:26px;flex:none}
+h1{font-size:17px;font-weight:650;margin:0;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+h1 span{color:var(--ink-2);font-weight:500}
+.tabs{display:flex;gap:2px;background:var(--panel-2);border:1px solid var(--rule);border-radius:9px;padding:3px}
+.tabs button{border:0;background:none;padding:5px 12px;border-radius:6px;color:var(--ink-2);font-weight:550}
+.tabs button[aria-selected=true]{background:var(--panel);color:var(--ink);box-shadow:var(--shadow)}
+.spacer{flex:1}
+.progress{display:flex;align-items:center;gap:10px;font:12px var(--mono);color:var(--ink-2)}
+.tape{display:flex;width:160px;height:6px;border-radius:3px;overflow:hidden;background:var(--rule)}
+.tape i{display:block;height:100%}
+.icon-btn{border:1px solid var(--rule);background:var(--panel);border-radius:8px;width:32px;height:32px;display:grid;place-items:center;color:var(--ink-2)}
+.icon-btn:hover{color:var(--ink)}
+.icon-btn.spin svg{animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:0;min-height:calc(100vh - 58px)}
+main{padding:18px 20px 40px;min-width:0}
+aside{border-left:1px solid var(--rule);background:var(--panel);padding:20px;position:sticky;top:58px;height:calc(100vh - 58px);overflow:auto}
+.view[hidden]{display:none}
+
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--ink-2);margin:0 0 12px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.dot{width:9px;height:9px;border-radius:50%;flex:none;display:inline-block}
+.s-built{--c:var(--built)} .s-done{--c:var(--built)} .s-in-pr{--c:var(--inpr)} .s-in-progress{--c:var(--inpr)} .s-planned{--c:var(--planned)}
+.s-idea{--c:var(--idea)} .s-missing{--c:var(--warn)} .s-unknown{--c:var(--warn)}
+.s-superseded,.s-closed{--c:var(--dead)}
+.dot{background:var(--c,var(--planned))}
+
+/* graph */
+.graph-wrap{background:var(--panel);border:1px solid var(--rule);border-radius:12px;overflow:auto;box-shadow:var(--shadow);
+  background-image:radial-gradient(var(--rule) 1px,transparent 1px);background-size:18px 18px}
+svg.graph{display:block}
+.edge{fill:none;stroke:var(--dead);stroke-width:1.5}
+.edge.hot{stroke:var(--accent);stroke-width:2.2}
+.gnode{cursor:pointer}
+.gnode rect.card{fill:var(--panel);stroke:var(--rule);stroke-width:1}
+.gnode:hover rect.card{stroke:var(--ink-2)}
+.gnode.sel rect.card{stroke:var(--accent);stroke-width:2}
+.gnode rect.stripe{fill:var(--c)}
+.gnode text{fill:var(--ink);font:600 12.5px var(--sans)}
+.gnode text.sub{fill:var(--ink-2);font:11px var(--mono);font-weight:400}
+.gnode.dim{opacity:.55}
+.col-label{fill:var(--ink-2);font:600 11px var(--mono);letter-spacing:.06em;text-transform:uppercase}
+
+/* tree */
+.pillar{background:var(--panel);border:1px solid var(--rule);border-radius:12px;margin-bottom:14px;box-shadow:var(--shadow);overflow:hidden}
+.pillar>header{position:static;background:none;backdrop-filter:none;display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--rule)}
+.pillar h2{margin:0;font-size:15px;font-weight:650}
+.feat{padding:10px 16px;border-bottom:1px solid var(--rule)}
+.feat:last-child{border-bottom:0}
+.feat-h{display:flex;align-items:center;gap:10px;cursor:pointer}
+.feat-h b{font-weight:600}
+.count{margin-left:auto;font:12px var(--mono);color:var(--ink-2)}
+.subs{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--rule);background:var(--panel-2);border-radius:999px;padding:3px 10px 3px 8px;font-size:12.5px;cursor:pointer;max-width:100%}
+.chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chip:hover{border-color:var(--ink-2)}
+.chip.sel{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.kind{font:10.5px var(--mono);color:var(--ink-2);text-transform:uppercase}
+.mini{width:90px;height:5px}
+
+/* sprint */
+.lanes{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.lane{background:var(--panel);border:1px solid var(--rule);border-radius:12px;padding:14px;box-shadow:var(--shadow)}
+.lane h3{margin:0 0 10px;font-size:14px;display:flex;align-items:center;gap:8px}
+.lane h3 em{font-style:normal;font:12px var(--mono);color:var(--ink-2);margin-left:auto}
+.task{border:1px solid var(--rule);border-left:3px solid var(--c);border-radius:8px;padding:9px 11px;margin-bottom:8px;cursor:pointer;background:var(--panel)}
+.task:hover{border-color:var(--ink-2);border-left-color:var(--c)}
+.task .t{font-weight:600}
+.task .m{font-size:12px;color:var(--ink-2);margin-top:3px}
+.task.wait{opacity:.62}
+.tag{display:inline-block;font:11px var(--mono);border-radius:4px;padding:1px 6px;background:var(--panel-2);border:1px solid var(--rule);color:var(--ink-2);margin-right:4px}
+.tag.go{color:var(--built);border-color:color-mix(in srgb,var(--built) 40%,transparent)}
+
+/* detail */
+.d-empty{color:var(--ink-2)}
+.d-kind{font:11px var(--mono);color:var(--ink-2);text-transform:uppercase;letter-spacing:.06em}
+aside h2{font-size:18px;line-height:1.3;margin:6px 0 10px}
+.badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;background:color-mix(in srgb,var(--c) 15%,transparent);color:var(--c)}
+dl{display:grid;grid-template-columns:96px 1fr;gap:6px 10px;margin:16px 0;font-size:13px}
+dt{color:var(--ink-2)} dd{margin:0;overflow-wrap:anywhere}
+.src{font:12px var(--mono);color:var(--ink-2);overflow-wrap:anywhere}
+.body{font-size:13.5px;border-top:1px solid var(--rule);padding-top:12px;color:var(--ink)}
+.close{display:none}
+.foot{font:11.5px var(--mono);color:var(--ink-2);margin-top:20px}
+
+@media (max-width:900px){
+  .layout{grid-template-columns:1fr}
+  aside{position:fixed;left:0;right:0;bottom:0;top:auto;height:auto;max-height:62vh;border-left:0;border-top:1px solid var(--rule);
+    border-radius:16px 16px 0 0;box-shadow:0 -8px 30px rgba(0,0,0,.25);transform:translateY(105%);transition:transform .22s ease;z-index:20}
+  aside.open{transform:none}
+  .close{display:grid;position:absolute;right:14px;top:14px}
+  .progress .tape{width:90px}
+  .bar{padding:10px 16px} main{padding:14px 16px 40px}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 26 26" aria-hidden="true"><path d="M7 13 L19 6 M7 13 L19 20" stroke="currentColor" stroke-opacity=".35" stroke-width="1.6"/><circle cx="7" cy="13" r="4" fill="var(--built)"/><circle cx="19" cy="6" r="3.4" fill="var(--inpr)"/><circle cx="19" cy="20" r="3.4" fill="var(--planned)"/></svg>
+      <h1 id="title">planmap</h1>
+    </div>
+    <div class="tabs" role="tablist">
+      <button role="tab" data-v="graph" aria-selected="true">Graph</button>
+      <button role="tab" data-v="tree" aria-selected="false">Features</button>
+      <button role="tab" data-v="sprint" aria-selected="false">Sprint</button>
+    </div>
+    <div class="spacer"></div>
+    <div class="progress"><div class="tape" id="tape"></div><span id="pct"></span></div>
+    <button class="icon-btn" id="refresh" title="Rebuild from git and GitHub" aria-label="Rebuild"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></button>
+    <button class="icon-btn" id="theme" title="Toggle theme" aria-label="Toggle theme"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+  </div>
+</header>
+<div class="layout">
+  <main>
+    <div class="legend" id="legend"></div>
+    <section class="view" id="v-graph"><div class="graph-wrap"><svg class="graph" id="graph"></svg></div></section>
+    <section class="view" id="v-tree" hidden></section>
+    <section class="view" id="v-sprint" hidden><div class="lanes" id="lanes"></div></section>
+  </main>
+  <aside id="detail" aria-live="polite">
+    <button class="icon-btn close" id="close" aria-label="Close">&times;</button>
+    <div id="d"></div>
+  </aside>
+</div>
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const STATUS = ["built","done","in-progress","in-pr","planned","idea","missing","superseded","closed","unknown"];
+const LABEL = {"built":"Built","done":"Done","in-pr":"In PR","in-progress":"In progress","planned":"Planned","idea":"Idea","missing":"Missing","superseded":"Superseded","closed":"Closed","unknown":"Not found"};
+let T = null, byId = {}, kids = {}, sel = null;
+
+try { const t = localStorage.getItem("planmap-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+$("#theme").onclick = () => {
+  const dark = getComputedStyle(document.documentElement).getPropertyValue("--bg").trim() === "#0d1117";
+  const t = dark ? "light" : "dark";
+  document.documentElement.dataset.theme = t;
+  try { localStorage.setItem("planmap-theme", t); } catch (e) {}
+};
+
+function tab(v) {
+  document.querySelectorAll(".tabs button").forEach(b => b.setAttribute("aria-selected", b.dataset.v === v));
+  for (const k of ["graph","tree","sprint"]) $("#v-" + k).hidden = k !== v;
+  if (location.hash !== "#" + v) history.replaceState(null, "", "#" + v);
+}
+document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => tab(b.dataset.v));
+
+async function load(rebuild) {
+  const btn = $("#refresh");
+  btn.classList.add("spin");
+  try {
+    const r = rebuild ? await fetch("api/rebuild", {method: "POST", headers: {"Content-Type": "application/json"}, body: "{}"})
+                      : await fetch("api/topology");
+    T = await r.json();
+    if (T.error) throw new Error(T.error);
+    render();
+  } catch (e) {
+    $("#d").innerHTML = `<p class="d-empty">Could not load the map: ${esc(e.message)}</p>`;
+  } finally { btn.classList.remove("spin"); }
+}
+$("#refresh").onclick = () => load(true);
+$("#close").onclick = () => $("#detail").classList.remove("open");
+
+function index() {
+  byId = {}; kids = {};
+  for (const n of T.nodes) { byId[n.id] = n; (kids[n.parent] ||= []).push(n); }
+}
+function leaves(id) {
+  const out = [];
+  (function walk(i) { for (const c of kids[i] || []) { if (c.status) out.push(c); walk(c.id); } })(id);
+  return out;
+}
+function tapeHTML(list) {
+  const total = list.length || 1, c = {};
+  for (const n of list) c[n.status] = (c[n.status] || 0) + 1;
+  return STATUS.filter(s => c[s]).map(s => `<i class="s-${s}" style="width:${100*c[s]/total}%;background:var(--c)"></i>`).join("");
+}
+
+function render() {
+  index();
+  document.title = `${T.project} · planmap`;
+  $("#title").innerHTML = `${esc(T.project)} <span>map</span>`;
+  const all = T.nodes.filter(n => n.status);
+  $("#tape").innerHTML = tapeHTML(all);
+  const done = all.filter(n => ["built","done"].includes(n.status)).length;
+  $("#pct").textContent = `${done}/${all.length} built`;
+  const present = STATUS.filter(s => all.some(n => n.status === s));
+  $("#legend").innerHTML = present.map(s => `<span class="s-${s}"><i class="dot"></i>${LABEL[s]}</span>`).join("");
+  renderGraph(); renderTree(); renderSprint();
+  if (sel && byId[sel]) show(sel); else showSummary();
+}
+
+/* ---------- graph: plan items laid out by dependency depth ---------- */
+function renderGraph() {
+  const items = T.nodes.filter(n => n.kind === "item" && n.item);
+  const byNum = {}; items.forEach(n => byNum[n.item] = n);
+  const depth = {};
+  const d = n => {
+    if (depth[n.item] !== undefined) return depth[n.item];
+    depth[n.item] = 0;
+    const deps = (n.dependsOn || []).map(x => byNum[String(x)]).filter(Boolean);
+    return depth[n.item] = deps.length ? 1 + Math.max(...deps.map(d)) : 0;
+  };
+  items.forEach(d);
+  const cols = {};
+  items.forEach(n => (cols[depth[n.item]] ||= []).push(n));
+  const pillarOf = n => { let p = byId[n.parent]; while (p && p.parent) p = byId[p.parent]; return p; };
+  const W = 216, H = 58, GX = 72, GY = 18, PX = 28, PY = 44;
+  const pos = {};
+  const ncol = Object.keys(cols).length;
+  let maxRows = 0;
+  Object.entries(cols).forEach(([c, list]) => {
+    list.sort((a, b) => {
+      const pa = pillarOf(a)?.id || "", pb = pillarOf(b)?.id || "";
+      const ya = Math.min(...(a.dependsOn || []).map(x => pos[x]?.y ?? 1e9), 1e9);
+      const yb = Math.min(...(b.dependsOn || []).map(x => pos[x]?.y ?? 1e9), 1e9);
+      return ya - yb || pa.localeCompare(pb) || (+a.item - +b.item);
+    });
+    list.forEach((n, i) => pos[n.item] = {x: PX + c * (W + GX), y: PY + i * (H + GY)});
+    maxRows = Math.max(maxRows, list.length);
+  });
+  const width = PX * 2 + ncol * W + (ncol - 1) * GX, height = PY + maxRows * (H + GY) + 10;
+  const svg = $("#graph");
+  svg.setAttribute("width", Math.max(width, 320)); svg.setAttribute("height", height);
+  svg.setAttribute("viewBox", `0 0 ${Math.max(width, 320)} ${height}`);
+  let out = "";
+  for (let c = 0; c < ncol; c++)
+    out += `<text class="col-label" x="${PX + c * (W + GX)}" y="26">${c === 0 ? "Start" : "Step " + (c + 1)}</text>`;
+  const hot = new Set();
+  if (sel && byId[sel]?.item) { const s = byId[sel]; hot.add(s.item); (s.dependsOn||[]).forEach(x => hot.add(String(x))); (s.blocks||[]).forEach(x => hot.add(String(x))); }
+  for (const n of items) for (const dep of n.dependsOn || []) {
+    const a = pos[dep], b = pos[n.item]; if (!a || !b) continue;
+    const x1 = a.x + W, y1 = a.y + H / 2, x2 = b.x, y2 = b.y + H / 2, mx = (x1 + x2) / 2;
+    const isHot = sel && byId[sel]?.item && (byId[sel].item === n.item || byId[sel].item === String(dep));
+    out += `<path class="edge${isHot ? " hot" : ""}" d="M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}" marker-end="url(#arr${isHot ? "h" : ""})"/>`;
+  }
+  for (const n of items) {
+    const p = pos[n.item], pil = pillarOf(n);
+    const t = n.title.replace(/^\d+\.\s*/, "").replace(/\s*\([^()]*\)\s*$/, "");
+    const short = t.length > 27 ? t.slice(0, 26) + "…" : t;
+    const sub = `#${n.item} · ${LABEL[n.status] || n.status}${n.lane ? " · " + n.lane : ""}`;
+    const dim = hot.size && !hot.has(n.item) ? " dim" : "";
+    out += `<g class="gnode s-${n.status}${sel === n.id ? " sel" : ""}${dim}" data-id="${esc(n.id)}" tabindex="0" role="button" aria-label="${esc(n.title)}">
+      <rect class="card" x="${p.x}" y="${p.y}" width="${W}" height="${H}" rx="9"/>
+      <rect class="stripe" x="${p.x}" y="${p.y + 8}" width="4" height="${H - 16}" rx="2"/>
+      <text x="${p.x + 16}" y="${p.y + 24}">${esc(short)}</text>
+      <text class="sub" x="${p.x + 16}" y="${p.y + 43}">${esc(sub)}</text>
+      <title>${esc(n.title)}${pil ? " (" + esc(pil.title) + ")" : ""}</title></g>`;
+  }
+  svg.innerHTML = `<defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--dead)"/></marker>
+    <marker id="arrh" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"/></marker></defs>` + out;
+  svg.querySelectorAll(".gnode").forEach(g => {
+    g.onclick = () => show(g.dataset.id, true);
+    g.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); show(g.dataset.id, true); } };
+  });
+}
+
+/* ---------- features tree ---------- */
+function renderTree() {
+  const pillars = T.nodes.filter(n => n.level === "pillar");
+  $("#v-tree").innerHTML = pillars.map(p => {
+    const feats = kids[p.id] || [];
+    const lv = leaves(p.id);
+    const body = feats.map(f => {
+      if (f.level !== "feature") return chip(f);
+      const subs = kids[f.id] || [], fl = leaves(f.id);
+      const ok = fl.filter(n => ["built","done"].includes(n.status)).length;
+      return `<div class="feat"><div class="feat-h" data-id="${esc(f.id)}"><b>${esc(f.title)}</b>
+        <div class="tape mini">${tapeHTML(fl)}</div><span class="count">${ok}/${fl.length}</span></div>
+        <div class="subs">${subs.map(chip).join("")}</div></div>`;
+    }).join("");
+    const ok = lv.filter(n => ["built","done"].includes(n.status)).length;
+    return `<div class="pillar"><header data-id="${esc(p.id)}"><h2>${esc(p.title)}</h2><div class="tape">${tapeHTML(lv)}</div>
+      <span class="count">${ok}/${lv.length}</span></header>${p.id === "unsorted" ? `<div class="feat"><div class="subs">${body}</div></div>` : body}</div>`;
+  }).join("");
+  $("#v-tree").querySelectorAll("[data-id]").forEach(el => el.onclick = () => show(el.dataset.id, true));
+}
+function chip(n) {
+  return `<button class="chip s-${n.status}${sel === n.id ? " sel" : ""}" data-id="${esc(n.id)}"><i class="dot"></i><span class="kind">${esc(n.kind || "")}</span><span>${esc(n.title)}</span></button>`;
+}
+
+/* ---------- sprint ---------- */
+function renderSprint() {
+  const lanes = T.sprint || {};
+  const names = Object.keys(lanes);
+  $("#lanes").innerHTML = names.length ? names.map(l => `<div class="lane"><h3>${esc(l)} next <em>${lanes[l].length} open</em></h3>
+    ${lanes[l].map(r => `<div class="task s-${r.status}${r.waitingOn.length ? " wait" : ""}" data-id="${esc(r.id)}" tabindex="0">
+      <div class="t">${esc(r.title)}</div>
+      <div class="m">${r.waitingOn.length ? `<span class="tag">waits on ${r.waitingOn.join(", ")}</span>` : `<span class="tag go">ready</span>`}<span class="tag">${esc(LABEL[r.status] || r.status)}</span></div>
+      ${r.note ? `<div class="m">${esc(r.note)}</div>` : ""}</div>`).join("")}</div>`).join("")
+    : `<p class="d-empty">Nothing open. Every planned item is built, done or closed.</p>`;
+  $("#lanes").querySelectorAll(".task").forEach(el => el.onclick = () => show(el.dataset.id, true));
+}
+
+/* ---------- detail ---------- */
+function showSummary() {
+  const s = T.sources || {};
+  const items = T.nodes.filter(n => n.kind === "item");
+  $("#d").innerHTML = `<div class="d-kind">Project</div><h2>${esc(T.project)}</h2>
+    <p class="d-empty">Click any node, feature or task to see where it comes from.</p>
+    <dl><dt>Plan items</dt><dd>${items.length}</dd><dt>Lanes</dt><dd>${esc((T.lanes || []).join(", ") || "none yet")}</dd>
+    <dt>Plan</dt><dd class="src">${esc(s.planFile)} @ ${esc(s.plan)}</dd><dt>HEAD</dt><dd class="src">${esc(s.head)}</dd>
+    <dt>GitHub</dt><dd class="src">${esc(s.github)}</dd></dl>
+    <div class="foot">built ${esc(T.generatedAt)}</div>`;
+}
+function link(o, label) {
+  if (!o) return "";
+  return `<dt>${label}</dt><dd>${o.url ? `<a href="${esc(o.url)}" target="_blank" rel="noopener">#${o.number}</a>` : "#" + o.number} <span class="s-${esc(o.status)} badge"><i class="dot"></i>${esc(LABEL[o.status] || o.status)}</span><div class="src">${esc(o.source)}</div></dd>`;
+}
+function show(id, user) {
+  const n = byId[id]; if (!n) return;
+  const prev = sel; sel = id;
+  if (user && prev !== id) { renderGraph(); renderTree(); }
+  const crumbs = []; let p = byId[n.parent];
+  while (p) { crumbs.unshift(p.title); p = byId[p.parent]; }
+  const rows = [];
+  if (crumbs.length) rows.push(`<dt>Path</dt><dd>${esc(crumbs.join(" / "))}</dd>`);
+  if (n.lane) rows.push(`<dt>Lane</dt><dd>${esc(n.lane)}<div class="src">${esc(n.laneSource || "")}</div></dd>`);
+  if (n.dependsOn?.length) rows.push(`<dt>Depends on</dt><dd>${n.dependsOn.map(x => `item ${x}`).join(", ")}</dd>`);
+  if (n.blocks?.length) rows.push(`<dt>Blocks</dt><dd>${n.blocks.map(x => `item ${x}`).join(", ")}</dd>`);
+  if (n.url) rows.push(`<dt>Link</dt><dd><a href="${esc(n.url)}" target="_blank" rel="noopener">${esc(n.url.replace(/^https:\/\/github.com\//, ""))}</a></dd>`);
+  if (n.branch) rows.push(`<dt>Branch</dt><dd class="src">${esc(n.branch)}</dd>`);
+  if (n.headingNote) rows.push(`<dt>Plan note</dt><dd>${esc(n.headingNote.text)}</dd>`);
+  if (n.note) rows.push(`<dt>Note</dt><dd>${esc(n.note)}</dd>`);
+  const sub = n.level !== "sub" ? leaves(n.id) : [];
+  if (sub.length) rows.push(`<dt>Progress</dt><dd><div class="tape" style="width:100%">${tapeHTML(sub)}</div></dd>`);
+  rows.push(`<dt>Source</dt><dd class="src">${esc(n.source || "")}</dd>`);
+  $("#d").innerHTML = `<div class="d-kind">${esc(n.kind || n.level)}</div><h2>${esc(n.title)}</h2>
+    ${n.status ? `<span class="badge s-${esc(n.status)}"><i class="dot"></i>${esc(LABEL[n.status] || n.status)}</span>` : ""}
+    <dl>${rows.join("")}${link(n.linkedIssue, "Issue")}${link(n.linkedPr, "PR")}</dl>
+    ${n.body ? `<div class="body">${esc(n.body)}</div>` : ""}`;
+  if (user) $("#detail").classList.add("open");
+}
+
+tab(["graph","tree","sprint"].includes(location.hash.slice(1)) ? location.hash.slice(1) : "graph");
+load(false);
+</script>
+</body>
+</html>

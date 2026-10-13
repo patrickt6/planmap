@@ -1,0 +1,18 @@
+{
+  "issues": [
+    {"number": 2, "title": "[item 1] Task model and storage", "state": "CLOSED", "stateReason": "COMPLETED", "url": "https://github.com/example/todo-app/issues/2", "labels": [{"name": "lane:backend"}]},
+    {"number": 4, "title": "[item 2] Task list view", "state": "OPEN", "stateReason": null, "url": "https://github.com/example/todo-app/issues/4", "labels": [{"name": "lane:frontend"}]},
+    {"number": 5, "title": "[item 3] Quick add from the keyboard", "state": "OPEN", "stateReason": null, "url": "https://github.com/example/todo-app/issues/5", "labels": [{"name": "lane:frontend"}]},
+    {"number": 6, "title": "[item 4] Due dates", "state": "OPEN", "stateReason": null, "url": "https://github.com/example/todo-app/issues/6", "labels": [{"name": "lane:backend"}]},
+    {"number": 7, "title": "[item 5] Reminders", "state": "OPEN", "stateReason": null, "url": "https://github.com/example/todo-app/issues/7", "labels": [{"name": "lane:backend"}]},
+    {"number": 8, "title": "[item 6] Sign in with email link", "state": "CLOSED", "stateReason": "COMPLETED", "url": "https://github.com/example/todo-app/issues/8", "labels": [{"name": "lane:backend"}]},
+    {"number": 9, "title": "[item 7] Shared lists", "state": "OPEN", "stateReason": null, "url": "https://github.com/example/todo-app/issues/9", "labels": [{"name": "lane:backend"}]},
+    {"number": 10, "title": "[item 9] Dark theme", "state": "OPEN", "stateReason": null, "url": "https://github.com/example/todo-app/issues/10", "labels": [{"name": "lane:frontend"}]},
+    {"number": 12, "title": "[item 8] Offline mode", "state": "OPEN", "stateReason": null, "url": "https://github.com/example/todo-app/issues/12", "labels": []}
+  ],
+  "prs": [
+    {"number": 3, "title": "[item 1] Task table and CRUD", "state": "MERGED", "isDraft": false, "url": "https://github.com/example/todo-app/pull/3", "headRefName": "issue-2-task-model"},
+    {"number": 11, "title": "[item 2] List view with done section", "state": "OPEN", "isDraft": false, "url": "https://github.com/example/todo-app/pull/11", "headRefName": "issue-4-list-view"},
+    {"number": 13, "title": "[item 9] Dark theme toggle", "state": "MERGED", "isDraft": false, "url": "https://github.com/example/todo-app/pull/13", "headRefName": "issue-10-dark-theme"}
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "name": "todo-app",
+  "pillars": [
+    {
+      "id": "tasks",
+      "title": "Tasks",
+      "features": [
+        {"id": "task-core", "title": "Task core", "items": ["1", "2", "3"],
+         "modules": ["src/api/tasks.py", "src/web/list_view.tsx"]},
+        {"id": "scheduling", "title": "Due dates and reminders", "items": ["4", "5", "10"],
+         "modules": ["src/api/reminders.py"],
+         "note": "Reminders wait on due dates. Ship 4 first."}
+      ]
+    },
+    {
+      "id": "accounts",
+      "title": "Accounts and sharing",
+      "features": [
+        {"id": "auth", "title": "Sign-in", "items": ["6"], "modules": ["src/api/auth.py"]},
+        {"id": "sharing", "title": "Shared lists", "items": ["7"]},
+        {"id": "offline", "title": "Offline sync", "items": ["8"],
+         "ideas": ["Conflict view when two people edit the same task"]}
+      ]
+    },
+    {
+      "id": "polish",
+      "title": "Polish",
+      "features": [
+        {"id": "theme", "title": "Theming", "items": ["9"], "modules": ["src/web/editor.tsx"]}
+      ]
+    }
+  ]
+}
